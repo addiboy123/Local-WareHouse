@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Files</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+<!-- Top Bar -->
+<div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+  <h1 class="font-semibold text-lg">Cloud Storage</h1>
+  <button onclick="logout()" class="bg-blue-500 px-4 py-2 rounded hover:bg-blue-700">
+    Logout
+  </button>
+</div>
+
+<div class="flex h-[calc(100vh-64px)]">
+
+  <!-- Sidebar -->
+  <aside class="hidden md:block w-64 bg-white border-r p-4">
+    <h2 class="font-semibold mb-4">Folders</h2>
+    <ul id="folderList" class="space-y-2 text-sm text-gray-700">
+      <li class="cursor-pointer hover:text-blue-600">📁 Root</li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 overflow-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+      <h2 id="currentPath" class="font-semibold text-gray-700">/</h2>
+
+      <div class="flex gap-2">
+        <input type="file" id="fileInput"
+          class="block w-full text-sm text-gray-500">
+        <button onclick="uploadFile()"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Upload
+        </button>
+      </div>
+    </div>
+
+    <!-- File Table -->
+    <div class="bg-white rounded shadow overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100 text-gray-600">
+          <tr>
+            <th class="text-left p-3">Name</th>
+            <th class="text-left p-3 hidden sm:table-cell">Size</th>
+            <th class="text-left p-3">Action</th>
+          </tr>
+        </thead>
+        <tbody id="fileList"></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>

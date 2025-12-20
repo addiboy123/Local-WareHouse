@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cloud Storage</title>
+</head>
+<body>
+<script>
+  const token = localStorage.getItem("token");
+  window.location.href = token ? "dashboard.html" : "login.html";
+</script>
+</body>
+</html>
