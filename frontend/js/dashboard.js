@@ -1,4 +1,4 @@
-const API = "http://localhost:8080/api";
+const API = window.location.origin + "/api";
 const token = localStorage.getItem("token");
 
 if (!token) location.href = "login.html";

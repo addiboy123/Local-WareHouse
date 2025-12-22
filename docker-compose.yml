@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile 
-    image: local-warehouse-backend:latest
+    image: local-warehouse-backend
     container_name: warehouse-backend
     ports:
       - "8080:8080"
@@ -39,16 +39,19 @@ services:
     networks:
       - warehouse-net
 
-  # frontend:
-  #   image: local-warehouse-frontend:latest
-  #   container_name: warehouse-frontend
-  #   ports:
-  #     - "3000:80"
-  #   depends_on:
-  #     - backend
-  #   restart: unless-stopped
-  #   networks:
-  #     - warehouse-net
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile 
+    image: local-warehouse-frontend
+    container_name: warehouse-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - warehouse-net
 
 
 volumes:
