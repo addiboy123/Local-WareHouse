@@ -11,7 +11,7 @@ import com.Local_WareHouse.backend.service.ShareService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/share")
+@RequestMapping("/api/share")
 public class ShareController {
 
     private final ShareService shareService;

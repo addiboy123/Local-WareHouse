@@ -12,8 +12,29 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       JWT_SECRET: ${JWT_SECRET}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
     volumes:
       - ./storage-data:/data/storage
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - warehouse-net
+
+  postgres:
+    image: postgres:16
+    container_name: warehouse-postgres
+    environment:
+      POSTGRES_DB: local_warehouse
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: warehouse_pass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # optional (for local debugging)
     restart: unless-stopped
     networks:
       - warehouse-net
@@ -30,7 +51,8 @@ services:
   #     - warehouse-net
 
 
-# volumes:
+volumes:
+  postgres-data:
 #   storage-data:
 #     driver: local
 

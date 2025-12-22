@@ -4,8 +4,30 @@
   <title>My Files</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<!-- Share Modal -->
+<div id="shareModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
 
+  <div class="bg-white rounded-lg w-full max-w-md p-5">
+    <h3 class="font-semibold text-lg mb-4">Sharing</h3>
+
+    <div id="shareList" class="space-y-3 text-sm"></div>
+
+    <div class="mt-5 text-right">
+      <button onclick="closeShareModal()"
+        class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<body class="bg-gray-100">
+<script>
+  if (!localStorage.getItem("token")) {
+    window.location.href = "/login.html";
+  }
+</script>
 <!-- Top Bar -->
 <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
   <h1 class="font-semibold text-lg">Cloud Storage</h1>
@@ -20,7 +42,13 @@
   <aside class="hidden md:block w-64 bg-white border-r p-4">
     <h2 class="font-semibold mb-4">Folders</h2>
     <ul id="folderList" class="space-y-2 text-sm text-gray-700">
-      <li class="cursor-pointer hover:text-blue-600">📁 Root</li>
+      <li onclick="loadRoot()" class="cursor-pointer hover:text-blue-600">
+        📁 Root
+      </li>
+      <li onclick="loadSharedFiles()" class="cursor-pointer">🔗 Shared Files</li>
+      <li onclick="loadSharedFolders()" class="cursor-pointer">🔗 Shared Folders</li>
+
+
     </ul>
   </aside>
 
@@ -38,8 +66,21 @@
           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Upload
         </button>
+        <button onclick="createFolderPrompt()"
+          class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          New Folder
+        </button>
+
       </div>
     </div>
+    <!-- Breadcrumbs -->
+    <div id="breadcrumbs" class="text-sm text-gray-600 mb-3"></div>
+
+    <!-- Search Input -->
+    <input id="searchBox"
+      placeholder="Search..."
+      class="border p-2 rounded w-full sm:w-64"
+      oninput="search()" />
 
     <!-- File Table -->
     <div class="bg-white rounded shadow overflow-x-auto">
@@ -58,6 +99,15 @@
   </main>
 </div>
 
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/breadcrumbs.js"></script>
+<script src="js/files.js"></script>
+<script src="js/folders.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/search.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/share.js"></script>
+
 </body>
 </html>

@@ -1,28 +1,54 @@
-const API = "http://localhost:8080/api";
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-function login() {
-  fetch(`${API}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email.value,
-      password: password.value
-    })
-  })
-  .then(r => r.json())
-  .then(d => {
-    localStorage.setItem("token", d.token);
-    location.href = "dashboard.html";
-  });
+  try {
+    const res = await apiFetch("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    localStorage.setItem("token", data.token);
+
+    window.location.href = "/dashboard.html";
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
-function register() {
-  fetch(`${API}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email.value,
-      password: password.value
-    })
-  }).then(() => location.href = "login.html");
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "/login.html";
+}
+
+async function register() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    alert("Email and password are required");
+    return;
+  }
+
+  try {
+    const res = await apiFetch("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+
+    // If backend returns token on register
+    const data = await res.json();
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      window.location.href = "/dashboard.html";
+    } else {
+      // fallback: redirect to login
+      window.location.href = "/login.html";
+    }
+
+  } catch (err) {
+    alert(err.message);
+  }
 }

@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/files")
+@RequestMapping("/api/files")
 public class FileController {
     private final FileService fileService;
     public FileController(FileService fileService) {

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 // import com.Local_WareHouse.backend.service.AuthService;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 
 public class AuthController {
