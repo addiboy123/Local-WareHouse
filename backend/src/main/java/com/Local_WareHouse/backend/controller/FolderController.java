@@ -1,6 +1,7 @@
 package com.Local_WareHouse.backend.controller;
 
 import com.Local_WareHouse.backend.dto.CreateFolderRequest;
+import com.Local_WareHouse.backend.dto.FolderContentsResponse;
 import com.Local_WareHouse.backend.dto.UpdateFolderRequest;
 import com.Local_WareHouse.backend.service.FolderService;
 
@@ -31,15 +32,17 @@ public class FolderController {
         );
     }
 
-    // -------- LIST CONTENTS --------
+    // -------- LIST CONTENTS WITH PAGINATION --------
     @GetMapping("/{id}")
     public ResponseEntity<?> contents(
             @PathVariable java.util.UUID id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             Authentication auth) {
 
         java.util.UUID userId = (java.util.UUID) auth.getPrincipal();
         return ResponseEntity.ok(
-            folderService.getContents(id, userId)
+            folderService.getContents(id, userId, page, size)
         );
     }
 
@@ -64,5 +67,30 @@ public class FolderController {
         java.util.UUID userId = (java.util.UUID) auth.getPrincipal();
         folderService.delete(id, userId);
         return ResponseEntity.ok().build();
+    }
+
+    // -------- GET ROOT CONTENTS WITH PAGINATION --------
+    @GetMapping("/root")
+    public FolderContentsResponse root(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+
+        UUID userId = (UUID) auth.getPrincipal();
+        return folderService.getRootContents(userId, page, size);
+    }
+
+    // -------- SEARCH FOLDERS --------
+    @GetMapping("/search")
+    public ResponseEntity<?> search(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+
+        UUID userId = (UUID) auth.getPrincipal();
+        return ResponseEntity.ok(
+            folderService.searchFolders(userId, query, page, size)
+        );
     }
 }

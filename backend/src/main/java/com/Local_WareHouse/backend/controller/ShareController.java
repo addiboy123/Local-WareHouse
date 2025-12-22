@@ -63,4 +63,48 @@ public class ShareController {
         UUID userId = (UUID) auth.getPrincipal();
         return shareService.getSharedFolders(userId, page, size);
     }
+
+    // ---------- UPDATE FILE SHARE ----------
+    @PutMapping("/file")
+    public ResponseEntity<?> updateFileShare(
+            @RequestBody UpdateShareRequest req,
+            Authentication auth) {
+
+        UUID ownerId = (UUID) auth.getPrincipal();
+        shareService.updateFileShare(req, ownerId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- REVOKE FILE SHARE ----------
+    @DeleteMapping("/file")
+    public ResponseEntity<?> revokeFileShare(
+            @RequestBody RevokeShareRequest req,
+            Authentication auth) {
+
+        UUID ownerId = (UUID) auth.getPrincipal();
+        shareService.revokeFileShare(req, ownerId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- UPDATE FOLDER SHARE ----------
+    @PutMapping("/folder")
+    public ResponseEntity<?> updateFolderShare(
+            @RequestBody UpdateShareRequest req,
+            Authentication auth) {
+
+        UUID ownerId = (UUID) auth.getPrincipal();
+        shareService.updateFolderShare(req, ownerId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- REVOKE FOLDER SHARE ----------
+    @DeleteMapping("/folder")
+    public ResponseEntity<?> revokeFolderShare(
+            @RequestBody RevokeShareRequest req,
+            Authentication auth) {
+
+        UUID ownerId = (UUID) auth.getPrincipal();
+        shareService.revokeFolderShare(req, ownerId);
+        return ResponseEntity.ok().build();
+    }
 }

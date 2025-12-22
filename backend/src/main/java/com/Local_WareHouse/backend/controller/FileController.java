@@ -63,4 +63,18 @@ public class FileController {
         fileService.update(id, request, userId);
         return ResponseEntity.ok().build();
     }
+
+    // -------- SEARCH FILES --------
+    @GetMapping("/search")
+    public ResponseEntity<?> search(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+
+        UUID userId = (UUID) auth.getPrincipal();
+        return ResponseEntity.ok(
+            fileService.searchFiles(userId, query, page, size)
+        );
+    }
 }

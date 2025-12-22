@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile 
+    image: local-warehouse-backend:latest
+    container_name: warehouse-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - ./storage-data:/data/storage
+    restart: unless-stopped
+    networks:
+      - warehouse-net
+
+  # frontend:
+  #   image: local-warehouse-frontend:latest
+  #   container_name: warehouse-frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+  #   networks:
+  #     - warehouse-net
+
+
+# volumes:
+#   storage-data:
+#     driver: local
+
+networks:
+  warehouse-net:
+    driver: bridge

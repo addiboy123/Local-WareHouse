@@ -2,7 +2,11 @@ package com.Local_WareHouse.backend.service;
 
 import com.Local_WareHouse.backend.dto.*;
 import com.Local_WareHouse.backend.entity.*;
+import com.Local_WareHouse.backend.exception.ForbiddenException;
+import com.Local_WareHouse.backend.exception.ResourceNotFoundException;
 import com.Local_WareHouse.backend.repository.*;
+
+import jakarta.transaction.Transactional;
 
 import java.util.UUID;
 
@@ -33,6 +37,19 @@ public class ShareService {
         this.userRepository = userRepository;
     }
 
+
+    // ------- FILE -------
+
+    // ------ GET SHARED FILES --------
+    public Page<FileMetadata> getSharedFiles(UUID userId, int page, int size) {
+        return fileShareRepo
+            .findBySharedWithId(
+                userId,
+                PageRequest.of(page, size)
+            )
+            .map(FileShare::getFile);
+    }
+    //   ------ SHARE FILE ------
     public void shareFile(ShareRequest req, UUID ownerId) {
 
         FileMetadata file = fileRepository
@@ -59,7 +76,55 @@ public class ShareService {
         }
     }
 
+    // ------ UPDATE FILE SHARE ------  
+    public void updateFileShare(UpdateShareRequest req, UUID ownerId) {
 
+        FileMetadata file = fileRepository
+            .findById(req.getResourceId())
+            .orElseThrow(() -> new ResourceNotFoundException("File not found"));
+
+        if (!file.getOwner().getId().equals(ownerId)) {
+            throw new ForbiddenException("Only owner can update shares");
+        }
+
+        FileShare share = fileShareRepo
+            .findByFileIdAndSharedWithId(
+                req.getResourceId(), req.getUserId())
+            .orElseThrow(() -> new ResourceNotFoundException("Share not found"));
+
+        share.setPermission(req.getPermission());
+        fileShareRepo.save(share);
+    }
+
+    // ------ REVOKE FILE SHARE ------
+    public void revokeFileShare(RevokeShareRequest req, UUID ownerId) {
+
+    FileMetadata file = fileRepository
+        .findById(req.getResourceId())
+        .orElseThrow(() -> new ResourceNotFoundException("File not found"));
+
+    if (!file.getOwner().getId().equals(ownerId)) {
+        throw new ForbiddenException("Only owner can revoke shares");
+    }
+
+    fileShareRepo.deleteByFileIdAndSharedWithId(
+        req.getResourceId(), req.getUserId());
+    }
+
+
+    // ------ FOLDER ------
+
+    // ------ GET SHARED FOLDERS --------
+    public Page<Folder> getSharedFolders(UUID userId, int page, int size) {
+        return folderShareRepo
+            .findBySharedWithId(
+                userId,
+                PageRequest.of(page, size)
+            )
+            .map(FolderShare::getFolder);
+    }
+
+    //   ------ SHARE FOLDER ------
     public void shareFolder(ShareRequest req, UUID ownerId) {
 
         Folder folder = folderRepository
@@ -85,24 +150,79 @@ public class ShareService {
             folderShareRepo.save(share);
         }
     }
+    //     ------ UPDATE FOLDER SHARE ------
+    @Transactional
+    public void updateFolderShare(UpdateShareRequest req, UUID ownerId) {
 
+        Folder folder = folderRepository
+            .findById(req.getResourceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Folder not found"));
 
-    public Page<FileMetadata> getSharedFiles(UUID userId, int page, int size) {
-        return fileShareRepo
-            .findBySharedWithId(
-                userId,
-                PageRequest.of(page, size)
-            )
-            .map(FileShare::getFile);
+        if (!folder.getOwner().getId().equals(ownerId)) {
+            throw new ForbiddenException("Only owner can update shares");
+        }
+
+        updateFolderShareRecursive(folder, req.getUserId(), req.getPermission());
+    }
+    private void updateFolderShareRecursive(
+        Folder folder,
+        UUID userId,
+        Permission permission) {
+
+        folderShareRepo
+            .findByFolderIdAndSharedWithId(folder.getId(), userId)
+            .ifPresent(share -> {
+                share.setPermission(permission);
+                folderShareRepo.save(share);
+            });
+
+        for (FileMetadata file : fileRepository.findByFolderId(folder.getId())) {
+            fileShareRepo
+                .findByFileIdAndSharedWithId(file.getId(), userId)
+                .ifPresent(share -> {
+                    share.setPermission(permission);
+                    fileShareRepo.save(share);
+                });
+        }
+
+        for (Folder child : folderRepository.findByParentId(folder.getId())) {
+            updateFolderShareRecursive(child, userId, permission);
+        }
     }
 
-    public Page<Folder> getSharedFolders(UUID userId, int page, int size) {
-        return folderShareRepo
-            .findBySharedWithId(
-                userId,
-                PageRequest.of(page, size)
-            )
-            .map(FolderShare::getFolder);
+    // ------ REVOKE FOLDER SHARE ------
+
+    @Transactional
+    public void revokeFolderShare(RevokeShareRequest req, UUID ownerId) {
+
+        Folder folder = folderRepository
+            .findById(req.getResourceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Folder not found"));
+
+        if (!folder.getOwner().getId().equals(ownerId)) {
+            throw new ForbiddenException("Only owner can revoke shares");
+        }
+
+        revokeFolderShareRecursive(folder, req.getUserId());
     }
+
+    private void revokeFolderShareRecursive(
+        Folder folder, UUID userId) {
+
+        folderShareRepo.deleteByFolderIdAndSharedWithId(folder.getId(), userId);
+
+        for (FileMetadata file : fileRepository.findByFolderId(folder.getId())) {
+            fileShareRepo.deleteByFileIdAndSharedWithId(file.getId(), userId);
+        }
+
+        for (Folder child : folderRepository.findByParentId(folder.getId())) {
+            revokeFolderShareRecursive(child, userId);
+        }
+    }
+
+
+
+    
+
 }
 

@@ -8,7 +8,9 @@ import com.Local_WareHouse.backend.repository.FolderRepository;
 import com.Local_WareHouse.backend.repository.FileRepository;
 import com.Local_WareHouse.backend.repository.UserRepository;
 
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -52,7 +54,9 @@ public class FolderService {
     }
 
     // -------- LIST CONTENTS --------
-    public FolderContentsResponse getContents(java.util.UUID folderId, java.util.UUID userId) {
+    public FolderContentsResponse getContents(java.util.UUID folderId, java.util.UUID userId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
 
         Folder folder = null;
 
@@ -64,14 +68,13 @@ public class FolderService {
 
         List<Folder> folders =
             (folder == null)
-                ? folderRepository.findByOwnerIdAndParentIsNull(userId)
-                : folderRepository.findByParentIdAndOwnerId(folder.getId(), userId);
+                ? folderRepository.findByOwnerIdAndParentIsNull(userId, pageable).getContent()
+                : folderRepository.findByParentIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
         List<FileMetadata> files =
-            fileRepository.findByFolderIdAndOwnerId(
-                folder == null ? null : folder.getId(),
-                userId
-            );
+            (folder == null)
+                ? fileRepository.findByFolderIsNullAndOwnerId(userId, pageable).getContent()
+                : fileRepository.findByFolderIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
         return new FolderContentsResponse(folders, files);
     }
@@ -99,9 +102,11 @@ public class FolderService {
 
     private void deleteRecursive(Folder folder, UUID userId) {
 
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+
         // delete files
         List<FileMetadata> files =
-            fileRepository.findByFolderIdAndOwnerId(folder.getId(), userId);
+            fileRepository.findByFolderIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
         for (FileMetadata file : files) {
             fileRepository.delete(file);
@@ -109,7 +114,7 @@ public class FolderService {
 
         // delete subfolders
         List<Folder> subFolders =
-            folderRepository.findByParentIdAndOwnerId(folder.getId(), userId);
+            folderRepository.findByParentIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
         for (Folder sub : subFolders) {
             deleteRecursive(sub, userId);
@@ -117,4 +122,26 @@ public class FolderService {
 
         folderRepository.delete(folder);
     }
+
+    public FolderContentsResponse getRootContents(
+        UUID userId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        List<Folder> folders =
+            folderRepository.findByParentIsNullAndOwnerId(userId, pageable)
+                .getContent();
+
+        List<FileMetadata> files =
+            fileRepository.findByFolderIsNullAndOwnerId(userId, pageable)
+                .getContent();
+
+        return new FolderContentsResponse(folders, files);
+    }
+
+    public Page<Folder> searchFolders(UUID userId, String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return folderRepository.findByNameContainingIgnoreCaseAndOwnerId(query, userId, pageable);
+    }
+
 }
