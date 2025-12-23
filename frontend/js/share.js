@@ -1,4 +1,4 @@
-const API = window.location.origin + "/api";
+const API = window.API_BASE;
 const token = localStorage.getItem("token");
 
 function fetchShares(type, id) {

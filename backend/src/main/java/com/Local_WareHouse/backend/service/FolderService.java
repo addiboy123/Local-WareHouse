@@ -76,7 +76,12 @@ public class FolderService {
                 ? fileRepository.findByFolderIsNullAndOwnerId(userId, pageable).getContent()
                 : fileRepository.findByFolderIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
-        return new FolderContentsResponse(folders, files);
+        return new FolderContentsResponse(
+            folder != null ? folder.getId() : null,
+            folder != null ? folder.getName() : "Root",
+            folders,
+            files
+        );
     }
 
     // -------- RENAME --------
@@ -136,7 +141,12 @@ public class FolderService {
             fileRepository.findByFolderIsNullAndOwnerId(userId, pageable)
                 .getContent();
 
-        return new FolderContentsResponse(folders, files);
+        return new FolderContentsResponse(
+            null,
+            "Root",
+            folders,
+            files
+        );
     }
 
     public Page<Folder> searchFolders(UUID userId, String query, int page, int size) {

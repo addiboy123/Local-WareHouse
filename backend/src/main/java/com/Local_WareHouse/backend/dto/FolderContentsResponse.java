@@ -8,12 +8,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
 public class FolderContentsResponse {
 
+    private UUID folderId;
+    private String folderName;
     private List<Folder> folders;
     private List<FileMetadata> files;
 }

@@ -23,18 +23,19 @@ function logout() {
 }
 
 async function register() {
+  const username = document.getElementById("username").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  if (!email || !password) {
-    alert("Email and password are required");
+  if (!username || !email || !password) {
+    alert("Username, email and password are required");
     return;
   }
 
   try {
     const res = await apiFetch("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ username, email, password })
     });
 
     // If backend returns token on register

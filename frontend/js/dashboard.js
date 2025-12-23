@@ -1,4 +1,4 @@
-const API = window.location.origin + "/api";
+const API = window.API_BASE;
 const token = localStorage.getItem("token");
 
 if (!token) location.href = "login.html";
@@ -91,8 +91,6 @@ function loadRoot() {
 function loadFolder(folderId) {
   currentFolderId = folderId;
   fetchContents(`/folders/${folderId}`);
-  pushBreadcrumb({ id: folderId, name: data.folderName });
-
 }
 
 function fetchContents(path) {
@@ -115,13 +113,17 @@ function renderContents(data) {
   currentPath.textContent =
     data.folderId ? `/folder/${data.folderId}` : "/";
 
+  if (data.folderId && (breadcrumbStack.length == 0 || breadcrumbStack[breadcrumbStack.length - 1].id !== data.folderId)) {
+    pushBreadcrumb({ id: data.folderId, name: data.folderName });
+  }
+
   /* -------- FOLDERS -------- */
   data.folders.forEach(folder => {
     fileList.innerHTML += `
       <tr class="border-t hover:bg-gray-50">
         <td class="p-3 text-blue-600 cursor-pointer"
             onclick="loadFolder('${folder.id}')">
-          📁 ${folder.name}
+          [Folder] ${folder.name}
           ${permissionBadge(folder.permission)}
         </td>
 
@@ -159,7 +161,7 @@ function renderContents(data) {
     fileList.innerHTML += `
       <tr class="border-t hover:bg-gray-50">
         <td class="p-3">
-          📄 ${f.originalName}
+          [File] ${f.originalName}
           ${permissionBadge(f.permission)}
         </td>
 

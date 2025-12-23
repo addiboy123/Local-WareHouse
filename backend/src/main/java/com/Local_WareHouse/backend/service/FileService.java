@@ -2,12 +2,15 @@ package com.Local_WareHouse.backend.service;
 
 import com.Local_WareHouse.backend.entity.FileMetadata;
 import com.Local_WareHouse.backend.entity.FileShare;
+import com.Local_WareHouse.backend.entity.Folder;
 import com.Local_WareHouse.backend.entity.User;
 import com.Local_WareHouse.backend.exception.ForbiddenException;
 import com.Local_WareHouse.backend.exception.ResourceNotFoundException;
 import com.Local_WareHouse.backend.repository.FileRepository;
 import com.Local_WareHouse.backend.repository.UserRepository;
 import com.Local_WareHouse.backend.repository.FileShareRepository;
+import com.Local_WareHouse.backend.repository.FolderShareRepository;
+import com.Local_WareHouse.backend.repository.FolderRepository;
 import com.Local_WareHouse.backend.entity.Permission;
 import com.Local_WareHouse.backend.dto.UpdateFileRequest;
 import com.Local_WareHouse.backend.util.PermissionUtil;
@@ -33,18 +36,24 @@ public class FileService {
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
     private final FileShareRepository fileShareRepo;
+    private final FolderShareRepository folderShareRepo;
     private final PermissionUtil permissionUtil;
+    private final FolderRepository folderRepository;
 
     private static  String STORAGE_ROOT;
 
     public FileService(FileRepository fileRepository, UserRepository userRepository,
                        FileShareRepository fileShareRepo,
+                       FolderShareRepository folderShareRepo,
+                        FolderRepository folderRepository,
                         PermissionUtil permissionUtil,
                        @Value("${file.storage.root}") String storageRoot) {
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
         this.fileShareRepo = fileShareRepo;
+        this.folderShareRepo = folderShareRepo;
         this.permissionUtil = permissionUtil;
+        this.folderRepository = folderRepository;
         STORAGE_ROOT = storageRoot;
     }
 
@@ -71,6 +80,18 @@ public class FileService {
 
             meta.setOwner(owner);
             meta.setMimeType(file.getContentType());
+
+            if (folderId != null) {
+                Folder folder = folderRepository.findById(folderId)
+                    .orElseThrow(() -> new RuntimeException("Folder not found"));
+                if (!folder.getOwner().getId().equals(userId) &&
+                    !folderShareRepo.findByFolderIdAndSharedWithId(folderId, userId)
+                        .filter(share -> share.getPermission() == Permission.WRITE)
+                        .isPresent()) {
+                    throw new ForbiddenException("No write access to folder");
+                }
+                meta.setFolder(folder);
+            }
 
             return fileRepository.save(meta);
 
