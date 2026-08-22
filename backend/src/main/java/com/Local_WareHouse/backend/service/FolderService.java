@@ -12,7 +12,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import jakarta.transaction.Transactional;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.List;
 
@@ -96,6 +99,7 @@ public class FolderService {
     }
 
     // -------- DELETE (RECURSIVE) --------
+    @Transactional
     public void delete(UUID folderId, UUID userId) {
 
         Folder folder = folderRepository
@@ -114,6 +118,11 @@ public class FolderService {
             fileRepository.findByFolderIdAndOwnerId(folder.getId(), userId, pageable).getContent();
 
         for (FileMetadata file : files) {
+            try {
+                Files.deleteIfExists(Paths.get(file.getStoragePath()));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to delete stored file", e);
+            }
             fileRepository.delete(file);
         }
 
