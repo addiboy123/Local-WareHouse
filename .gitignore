@@ -36,3 +36,4 @@ build/
 .env
 
 storage-data/
+node_modules/
