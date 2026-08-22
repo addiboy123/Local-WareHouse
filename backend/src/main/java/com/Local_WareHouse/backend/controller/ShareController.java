@@ -31,6 +31,15 @@ public class ShareController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/file/email")
+    public ResponseEntity<?> shareFileByEmail(
+            @RequestBody ShareByEmailRequest req,
+            Authentication auth) {
+        UUID ownerId = (UUID) auth.getPrincipal();
+        shareService.shareFileByEmail(req, ownerId);
+        return ResponseEntity.ok().build();
+    }
+
     // -------- SHARE FOLDER --------
     @PostMapping("/folder")
     public ResponseEntity<?> shareFolder(

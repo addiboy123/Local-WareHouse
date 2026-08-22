@@ -26,8 +26,7 @@ public class FileController {
             Authentication auth) {
 
         UUID userId = (UUID) auth.getPrincipal();
-        fileService.upload(file, folderId, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(fileService.upload(file, folderId, userId));
     }
 
     // -------- DOWNLOAD --------

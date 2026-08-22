@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,42 +62,45 @@ public class FileService {
             MultipartFile file,
             UUID folderId,
             UUID userId) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("A non-empty file is required");
+        }
 
+        User owner = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Folder folder = null;
+
+        if (folderId != null) {
+            folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Folder not found"));
+            if (!folder.getOwner().getId().equals(userId) &&
+                !folderShareRepo.findByFolderIdAndSharedWithId(folderId, userId)
+                    .filter(share -> share.getPermission() == Permission.WRITE)
+                    .isPresent()) {
+                throw new ForbiddenException("No write access to folder");
+            }
+        }
+
+        Path target = Paths.get(STORAGE_ROOT, userId.toString(), UUID.randomUUID().toString());
         try {
-            String storageName = UUID.randomUUID().toString();
-            Path userDir = Paths.get(STORAGE_ROOT, userId.toString());
-            Files.createDirectories(userDir);
-
-            Path target = userDir.resolve(storageName);
+            Files.createDirectories(target.getParent());
             Files.copy(file.getInputStream(), target);
 
             FileMetadata meta = new FileMetadata();
-            meta.setOriginalName(file.getOriginalFilename());
+            meta.setOriginalName(file.getOriginalFilename() == null ? "unnamed-file" : file.getOriginalFilename());
             meta.setStoragePath(target.toString());
             meta.setSize(file.getSize());
-
-            User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
             meta.setOwner(owner);
-            meta.setMimeType(file.getContentType());
-
-            if (folderId != null) {
-                Folder folder = folderRepository.findById(folderId)
-                    .orElseThrow(() -> new RuntimeException("Folder not found"));
-                if (!folder.getOwner().getId().equals(userId) &&
-                    !folderShareRepo.findByFolderIdAndSharedWithId(folderId, userId)
-                        .filter(share -> share.getPermission() == Permission.WRITE)
-                        .isPresent()) {
-                    throw new ForbiddenException("No write access to folder");
-                }
-                meta.setFolder(folder);
-            }
-
+            meta.setMimeType(file.getContentType() == null ? "application/octet-stream" : file.getContentType());
+            meta.setFolder(folder);
             return fileRepository.save(meta);
-
         } catch (Exception e) {
-            throw new RuntimeException("File upload failed");
+            try {
+                Files.deleteIfExists(target);
+            } catch (Exception ignored) {
+                // Preserve the original storage failure.
+            }
+            throw new RuntimeException("File upload failed", e);
         }
     }
 
@@ -119,9 +123,15 @@ public class FileService {
 
     Resource resource = new FileSystemResource(file.getStoragePath());
 
+    if (!resource.exists() || !resource.isReadable()) {
+        throw new ResourceNotFoundException("Stored file not found");
+    }
+
     return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(file.getMimeType()))
+        .contentLength(file.getSize())
         .header("Content-Disposition",
-            "attachment; filename=\"" + file.getOriginalName() + "\"")
+            "attachment; filename*=UTF-8''" + java.net.URLEncoder.encode(file.getOriginalName(), java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"))
         .body(resource);
 }
 

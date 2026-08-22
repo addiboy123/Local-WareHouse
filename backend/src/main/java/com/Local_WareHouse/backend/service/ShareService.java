@@ -76,6 +76,24 @@ public class ShareService {
         }
     }
 
+    public void shareFileByEmail(ShareByEmailRequest req, UUID ownerId) {
+        FileMetadata file = fileRepository.findById(req.getResourceId())
+            .filter(item -> item.getOwner().getId().equals(ownerId))
+            .orElseThrow(() -> new ResourceNotFoundException("File not found"));
+        User target = userRepository.findByEmail(req.getEmail())
+            .orElseThrow(() -> new ResourceNotFoundException("User with that email was not found"));
+        if (target.getId().equals(ownerId)) {
+            throw new ForbiddenException("A file cannot be shared with its owner");
+        }
+        FileShare share = fileShareRepo.findByFileIdAndSharedWithId(file.getId(), target.getId())
+            .orElseGet(FileShare::new);
+        share.setFile(file);
+        share.setSharedBy(userRepository.getReferenceById(ownerId));
+        share.setSharedWith(target);
+        share.setPermission(req.getPermission());
+        fileShareRepo.save(share);
+    }
+
     // ------ UPDATE FILE SHARE ------  
     public void updateFileShare(UpdateShareRequest req, UUID ownerId) {
 
